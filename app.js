@@ -3,72 +3,47 @@ if ('serviceWorker' in navigator) {
 }
 
 const routeList = document.getElementById('routeList');
-const upload = document.getElementById('gpxUpload');
-const themeToggle = document.getElementById('themeToggle');
 const dashboard = document.getElementById('dashboard');
-let gpxLayer;
+let map = L.map('map').setView([-22.2171, -48.7173], 14);
+let gpxLayer, userMarker;
 
-let db;
-const request = indexedDB.open("gpxRoutes", 1);
-request.onupgradeneeded = function(e) {
-  db = e.target.result;
-  db.createObjectStore("routes", { keyPath: "name" });
-};
-request.onsuccess = function(e) {
-  db = e.target.result;
-  loadSavedRoutes();
-};
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-function saveToDB(fileObj) {
-  const tx = db.transaction("routes", "readwrite");
-  tx.objectStore("routes").put(fileObj);
-  tx.oncomplete = loadSavedRoutes;
-}
-
-function loadSavedRoutes() {
-  const tx = db.transaction("routes", "readonly");
-  const store = tx.objectStore("routes");
-  const req = store.getAll();
-  req.onsuccess = function() {
-    displayRoutes(req.result);
-  };
-}
-
-function displayRoutes(routes) {
-  routeList.innerHTML = '';
-  routes.forEach((file, index) => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <strong>${file.displayName || file.name}</strong>
-      <button onclick="loadGPX('${file.name}')">Iniciar</button>
-    `;
-    routeList.appendChild(li);
+// Ativar localização
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(pos => {
+    const latlng = [pos.coords.latitude, pos.coords.longitude];
+    if (!userMarker) {
+      userMarker = L.marker(latlng).addTo(map).bindPopup("Você está aqui");
+    } else {
+      userMarker.setLatLng(latlng);
+    }
+  }, err => {
+    alert("GPS não disponível: " + err.message);
   });
+} else {
+  alert("Geolocalização não suportada.");
 }
 
-upload.addEventListener('change', e => {
-  const files = Array.from(e.target.files);
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = evt => {
-      saveToDB({ name: file.name, content: evt.target.result, displayName: file.name });
-    };
-    reader.readAsText(file);
+// Carregar rotas do routes.json
+fetch('routes.json')
+  .then(res => res.json())
+  .then(data => {
+    data.forEach(route => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${route.name}</strong>: ${route.description}
+        <button onclick="loadGPX('${route.file}')">Iniciar</button>`;
+      routeList.appendChild(li);
+    });
   });
-});
 
-function loadGPX(name) {
-  const tx = db.transaction("routes", "readonly");
-  const store = tx.objectStore("routes");
-  const req = store.get(name);
-  req.onsuccess = () => {
-    if (gpxLayer) map.removeLayer(gpxLayer);
-    gpxLayer = new L.GPX(req.result.content, { async: true }).on("loaded", e => {
-      map.fitBounds(e.target.getBounds());
-      speak("Rota carregada com sucesso");
-      showStats(e.target);
-    }).addTo(map);
-  };
+function loadGPX(file) {
+  if (gpxLayer) map.removeLayer(gpxLayer);
+  gpxLayer = new L.GPX(file, { async: true }).on("loaded", e => {
+    map.fitBounds(e.target.getBounds());
+    speak("Rota carregada com sucesso");
+    showStats(e.target);
+  }).addTo(map);
 }
 
 function showStats(layer) {
@@ -83,10 +58,3 @@ function speak(msg) {
   u.lang = 'pt-BR';
   speechSynthesis.speak(u);
 }
-
-const map = L.map('map').setView([-22.2171, -48.7173], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-themeToggle.addEventListener('change', () => {
-  document.body.classList.toggle('dark', themeToggle.checked);
-});

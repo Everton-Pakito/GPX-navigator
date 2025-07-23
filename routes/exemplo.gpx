@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="ChatGPT" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Exemplo de Rota</name>
+    <trkseg>
+      <trkpt lat="-22.2171" lon="-48.7173"><ele>700</ele></trkpt>
+      <trkpt lat="-22.2181" lon="-48.7180"><ele>702</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

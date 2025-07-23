@@ -1,17 +1,9 @@
 body {
   font-family: sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  background: #f9f9f9;
+  color: #333;
   margin: 0;
   padding: 20px;
-}
-:root {
-  --bg: #ffffff;
-  --text: #000000;
-}
-body.dark {
-  --bg: #1e1e1e;
-  --text: #ffffff;
 }
 footer {
   margin-top: 40px;
