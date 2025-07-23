@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPX Navigator</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  <div id="app">
+    <h1>GPX Navigator</h1>
+    <div>
+      <label for="themeToggle">🌙 Modo Escuro</label>
+      <input type="checkbox" id="themeToggle" />
+    </div>
+    <input type="file" id="gpxUpload" accept=".gpx" multiple />
+    <ul id="routeList"></ul>
+    <div id="dashboard"></div>
+    <div id="map" style="height: 400px; margin-top:20px;"></div>
+    <footer><p>Feito com ❤️ por Everton Tezzon Ferreira</p></footer>
+  </div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-gpx/gpx.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
