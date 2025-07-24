@@ -5,7 +5,12 @@ body {
   margin: 0;
   padding: 20px;
 }
+#position {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+}
 footer {
-  margin-top: 40px;
+  margin-top: 30px;
   text-align: center;
 }

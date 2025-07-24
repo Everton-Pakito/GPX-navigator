@@ -1,6 +1,6 @@
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open('gpx-cache-v3').then(cache => {
+    caches.open('gpx-cache-v5').then(cache => {
       return cache.addAll([
         './',
         './index.html',

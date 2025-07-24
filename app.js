@@ -2,38 +2,57 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
 
-const routeList = document.getElementById('routeList');
-const dashboard = document.getElementById('dashboard');
-let map = L.map('map').setView([-22.2171, -48.7173], 14);
-let gpxLayer, userMarker;
+const map = L.map('map').setView([-22.2171, -48.7173], 15);
+let gpxLayer, userMarker, gpxPoints = [];
+let currentPosition = null;
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// Ativar localização
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(pos => {
-    const latlng = [pos.coords.latitude, pos.coords.longitude];
-    if (!userMarker) {
-      userMarker = L.marker(latlng).addTo(map).bindPopup("Você está aqui");
-    } else {
-      userMarker.setLatLng(latlng);
+navigator.geolocation.watchPosition(pos => {
+  const latlng = [pos.coords.latitude, pos.coords.longitude];
+  currentPosition = latlng;
+  document.getElementById("position").textContent = "Lat/Lng: " + latlng.map(c => c.toFixed(5)).join(", ");
+  if (!userMarker) {
+    userMarker = L.marker(latlng).addTo(map).bindPopup("Você está aqui");
+  } else {
+    userMarker.setLatLng(latlng);
+  }
+  checkProximity();
+}, err => {
+  alert("Erro de GPS: " + err.message);
+}, { enableHighAccuracy: true });
+
+document.getElementById("centerMe").onclick = () => {
+  if (currentPosition) {
+    map.setView(currentPosition, 17);
+  }
+};
+
+function checkProximity() {
+  if (!gpxPoints.length || !currentPosition) return;
+  gpxPoints.forEach((pt, idx) => {
+    const dist = map.distance(currentPosition, [pt.lat, pt.lon]);
+    if (dist < 20) {
+      speak(`Ponto ${idx + 1} alcançado`);
     }
-  }, err => {
-    alert("GPS não disponível: " + err.message);
   });
-} else {
-  alert("Geolocalização não suportada.");
 }
 
-// Carregar rotas do routes.json
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'pt-BR';
+  speechSynthesis.speak(u);
+}
+
 fetch('routes.json')
   .then(res => res.json())
   .then(data => {
+    const list = document.getElementById('routeList');
     data.forEach(route => {
       const li = document.createElement('li');
       li.innerHTML = `<strong>${route.name}</strong>: ${route.description}
         <button onclick="loadGPX('${route.file}')">Iniciar</button>`;
-      routeList.appendChild(li);
+      list.appendChild(li);
     });
   });
 
@@ -41,20 +60,7 @@ function loadGPX(file) {
   if (gpxLayer) map.removeLayer(gpxLayer);
   gpxLayer = new L.GPX(file, { async: true }).on("loaded", e => {
     map.fitBounds(e.target.getBounds());
-    speak("Rota carregada com sucesso");
-    showStats(e.target);
+    speak("Rota carregada com sucesso.");
+    gpxPoints = e.target.get_track_points().map(p => ({ lat: p.lat, lon: p.lon }));
   }).addTo(map);
-}
-
-function showStats(layer) {
-  const name = layer.get_name() || "Rota";
-  const distance = (layer.get_distance() / 1000).toFixed(2);
-  const elevation = layer.get_elevation_gain().toFixed(1);
-  dashboard.innerHTML = `<p><strong>${name}</strong><br>Distância: ${distance} km<br>Subida: ${elevation} m</p>`;
-}
-
-function speak(msg) {
-  const u = new SpeechSynthesisUtterance(msg);
-  u.lang = 'pt-BR';
-  speechSynthesis.speak(u);
 }

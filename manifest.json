@@ -3,7 +3,7 @@
   "short_name": "GPXNav",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1c1c1c",
+  "background_color": "#ffffff",
   "theme_color": "#3498db",
   "icons": [
     {
