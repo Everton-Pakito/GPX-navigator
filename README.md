@@ -1,11 +1,13 @@
-# GPX Navigator - Avançado
+# 🌍 GPX Navigator
 
-PWA completo com:
+App PWA de navegação com arquivos GPX, voz e GPS offline.
+Feito com ❤️ por Everton Tezzon Ferreira.
 
-- Leitura da pasta /routes/
-- Upload com IndexedDB (persistência local)
-- Renomear e favoritar rotas
-- Modo escuro automático e manual
-- Dashboard com distância e elevação
+## Funcionalidades
+- Leitura de arquivos `.gpx`
+- Rastreamento por GPS
+- Notificações por voz (português)
+- Funcionamento offline
+- Instalação como app
 
-Feito com ❤️ por Everton Tezzon Ferreira
+Acesse e teste via GitHub Pages ou servidor HTTPS.
