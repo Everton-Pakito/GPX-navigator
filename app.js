@@ -5,11 +5,18 @@ let gpxLayer, userMarker, gpxPoints = [], currentPosition = null;
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+const customIcon = L.icon({
+  iconUrl: 'icons/usuario.png',
+  iconSize: [48, 48],
+  iconAnchor: [24, 48],
+  popupAnchor: [0, -48]
+});
+
 navigator.geolocation.watchPosition(pos => {
   const latlng = [pos.coords.latitude, pos.coords.longitude];
   currentPosition = latlng;
   document.getElementById("position").textContent = "Lat/Lng: " + latlng.map(c => c.toFixed(5)).join(", ");
-  if (!userMarker) userMarker = L.marker(latlng).addTo(map).bindPopup("Você está aqui");
+  if (!userMarker) userMarker = L.marker(latlng, { icon: customIcon }).addTo(map).bindPopup("Você está aqui");
   else userMarker.setLatLng(latlng);
   checkProximity();
 }, err => alert("Erro de GPS: " + err.message), { enableHighAccuracy: true });
@@ -32,16 +39,6 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
-fetch('routes.json').then(res => res.json()).then(data => {
-  const list = document.getElementById('routeList');
-  data.forEach(route => {
-    const li = document.createElement('li');
-    li.innerHTML = `<strong>${route.name}</strong>: ${route.description}
-      <button onclick="loadGPX('${route.file}')">Iniciar</button>`;
-    list.appendChild(li);
-  });
-});
-
 function loadGPX(file) {
   if (gpxLayer) map.removeLayer(gpxLayer);
   gpxLayer = new L.GPX(file, { async: true }).on("loaded", e => {
@@ -50,3 +47,19 @@ function loadGPX(file) {
     gpxPoints = e.target.get_track_points().map(p => ({ lat: p.lat, lon: p.lon }));
   }).addTo(map);
 }
+
+fetch('routes.json').then(res => res.json()).then(data => {
+  const select = document.getElementById('routeSelect');
+  data.forEach(route => {
+    const opt = document.createElement('option');
+    opt.value = route.file;
+    opt.textContent = route.name;
+    select.appendChild(opt);
+  });
+});
+
+document.getElementById("startNav").onclick = () => {
+  const selected = document.getElementById("routeSelect").value;
+  if (selected) loadGPX(selected);
+  else alert("Selecione uma rota.");
+};
