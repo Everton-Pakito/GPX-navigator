@@ -1,6 +1,10 @@
 [
   {
-    "name": "Exemplo",
-    "file": "routes/exemplo.gpx"
+    "name": "Frente01Carregado",
+    "file": "routes/Frente01Carregado.gpx"
+  },
+  {
+    "name": "Frente02CarrVazio",
+    "file": "routes/Frente02CarrVazio.gpx"
   }
 ]
