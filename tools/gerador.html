@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <title>Gerador de routes.json</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; color: #333; }
+    textarea { width: 100%; height: 200px; margin-top: 10px; font-family: monospace; }
+    input[type="file"] { margin-top: 10px; }
+    footer { margin-top: 30px; text-align: center; }
+  </style>
+</head><body>
+  <h1>🛠️ Gerador de <code>routes.json</code></h1>
+  <p>Faça upload dos seus arquivos <code>.gpx</code> para gerar um <code>routes.json</code> automaticamente:</p>
+
+  <input type="file" id="fileInput" accept=".gpx" multiple />
+  <button onclick="gerar()">Gerar JSON</button>
+
+  <textarea id="output" readonly placeholder="routes.json aparecerá aqui..."></textarea>
+  <button onclick="baixar()">⬇️ Baixar routes.json</button>
+
+  <footer><p>Feito com ❤️ por Everton Tezzon Ferreira</p></footer>
+
+  <script>
+    let arquivos = [];
+
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      arquivos = Array.from(e.target.files);
+    });
+
+    function gerar() {
+      if (!arquivos.length) {
+        alert("Envie pelo menos um arquivo .gpx");
+        return;
+      }
+
+      const rotas = arquivos.map(f => ({
+        name: f.name.replace(".gpx", "").replace(/[_-]/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+        file: "routes/" + f.name
+      }));
+
+      const json = JSON.stringify(rotas, null, 2);
+      document.getElementById("output").value = json;
+    }
+
+    function baixar() {
+      const blob = new Blob([document.getElementById("output").value], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "routes.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body></html>
