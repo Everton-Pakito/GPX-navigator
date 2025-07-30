@@ -1,3 +1,105 @@
-body { font-family: sans-serif; background: #f9f9f9; color: #333; margin: 0; padding: 20px; }
-#position { margin-top: 10px; font-size: 14px; color: #666; }
-footer { margin-top: 30px; text-align: center; }
+body { 
+  font-family: sans-serif; 
+  background: #f9f9f9; 
+  color: #333; 
+  margin: 0; 
+  padding: 20px; 
+}
+
+#app {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 30px;
+}
+
+select, button {
+  padding: 10px 15px;
+  margin: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+#routeSelect {
+  min-width: 200px;
+}
+
+#map {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+#position { 
+  margin-top: 10px; 
+  font-size: 14px; 
+  color: #666; 
+  background: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #eee;
+}
+
+footer { 
+  margin-top: 30px; 
+  text-align: center; 
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+/* Estilos para controles do mapa */
+.leaflet-control-container {
+  font-size: 14px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+  
+  select, button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    box-sizing: border-box;
+  }
+  
+  #map {
+    height: 300px !important;
+  }
+}
+
+/* Estilos para tela cheia */
+.fullscreen-map {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1000 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
