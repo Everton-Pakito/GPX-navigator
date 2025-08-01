@@ -15,16 +15,15 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Ícone customizado para o usuário
 const customIcon = L.icon({
-  iconUrl: 'icons/usuario.png',
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjAiIGZpbGw9IiMzNDk4ZGIiLz4KPGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMTAiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==',
   iconSize: [48, 48],
-  iconAnchor: [24, 48],
-  popupAnchor: [0, -48]
+  iconAnchor: [24, 24],
+  popupAnchor: [0, -24]
 });
 
 // Função para alternar tela cheia
 function toggleFullscreen() {
   const mapElement = document.getElementById('map');
-  const appElement = document.getElementById('app');
   
   if (isNavigating) {
     // Modo navegação - tela cheia
@@ -81,6 +80,8 @@ function addBackButton() {
   backButton.style.border = 'none';
   backButton.style.borderRadius = '5px';
   backButton.style.cursor = 'pointer';
+  backButton.style.fontSize = '14px';
+  backButton.style.fontFamily = 'sans-serif';
   
   backButton.onclick = () => {
     isNavigating = false;
@@ -170,6 +171,57 @@ function speak(text) {
   }
 }
 
+// Parser GPX customizado
+function parseGPX(gpxText) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(gpxText, "text/xml");
+  
+  // Verifica se há erros no XML
+  const parserError = xmlDoc.querySelector("parsererror");
+  if (parserError) {
+    throw new Error("Erro ao analisar arquivo GPX: XML inválido");
+  }
+  
+  const tracks = [];
+  const waypoints = [];
+  
+  // Extrai tracks
+  const trkElements = xmlDoc.querySelectorAll('trk');
+  trkElements.forEach(trk => {
+    const trksegs = trk.querySelectorAll('trkseg');
+    trksegs.forEach(trkseg => {
+      const trkpts = trkseg.querySelectorAll('trkpt');
+      const points = [];
+      
+      trkpts.forEach(trkpt => {
+        const lat = parseFloat(trkpt.getAttribute('lat'));
+        const lon = parseFloat(trkpt.getAttribute('lon'));
+        if (!isNaN(lat) && !isNaN(lon)) {
+          points.push([lat, lon]);
+        }
+      });
+      
+      if (points.length > 0) {
+        tracks.push(points);
+      }
+    });
+  });
+  
+  // Extrai waypoints
+  const wptElements = xmlDoc.querySelectorAll('wpt');
+  wptElements.forEach(wpt => {
+    const lat = parseFloat(wpt.getAttribute('lat'));
+    const lon = parseFloat(wpt.getAttribute('lon'));
+    const name = wpt.querySelector('name')?.textContent || 'Waypoint';
+    
+    if (!isNaN(lat) && !isNaN(lon)) {
+      waypoints.push({ lat, lon, name });
+    }
+  });
+  
+  return { tracks, waypoints };
+}
+
 // Carrega arquivo GPX
 function loadGPX(filePath) {
   console.log("Tentando carregar GPX:", filePath);
@@ -187,53 +239,84 @@ function loadGPX(filePath) {
       }
       return response.text();
     })
-    .then(gpxData => {
-      // Cria nova camada GPX
-      gpxLayer = new L.GPX(gpxData, {
-        async: true,
-        marker_options: {
-          startIconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-          endIconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    .then(gpxText => {
+      console.log("Arquivo GPX carregado, analisando...");
+      
+      // Parse do GPX
+      const gpxData = parseGPX(gpxText);
+      console.log("GPX analisado:", gpxData);
+      
+      if (gpxData.tracks.length === 0) {
+        throw new Error("Nenhuma track encontrada no arquivo GPX");
+      }
+      
+      // Cria grupo de camadas
+      gpxLayer = L.layerGroup();
+      gpxPoints = [];
+      
+      // Adiciona tracks ao mapa
+      gpxData.tracks.forEach((track, trackIndex) => {
+        if (track.length > 0) {
+          // Cria polyline para a track
+          const polyline = L.polyline(track, {
+            color: '#e74c3c',
+            weight: 4,
+            opacity: 0.8
+          });
+          
+          gpxLayer.addLayer(polyline);
+          
+          // Adiciona pontos ao array para verificação de proximidade
+          track.forEach(point => {
+            gpxPoints.push({ lat: point[0], lon: point[1] });
+          });
+          
+          // Adiciona marcadores de início e fim
+          if (track.length > 1) {
+            const startMarker = L.marker(track[0], {
+              icon: L.icon({
+                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiMyN2FlNjAiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IndoaXRlIj4KPHN0eWxlPi5zdDB7ZmlsbDojZmZmZmZmO308L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNOCw1djE0bDExLTdMOCw1eiIvPgo8L3N2Zz4KPC9zdmc+',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              })
+            }).bindPopup("Início da rota");
+            
+            const endMarker = L.marker(track[track.length - 1], {
+              icon: L.icon({
+                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiNlNzRjM2MiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IndoaXRlIj4KPHN0eWxlPi5zdDB7ZmlsbDojZmZmZmZmO308L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTksMTNINXYtMkgxOVYxM3oiLz4KPC9zdmc+Cjwvc3ZnPg==',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              })
+            }).bindPopup("Fim da rota");
+            
+            gpxLayer.addLayer(startMarker);
+            gpxLayer.addLayer(endMarker);
+          }
         }
       });
       
-      gpxLayer.on("loaded", function(e) {
-        console.log("GPX carregado com sucesso");
-        map.fitBounds(e.target.getBounds());
-        speak("Rota carregada com sucesso.");
+      // Adiciona waypoints
+      gpxData.waypoints.forEach(wp => {
+        const marker = L.marker([wp.lat, wp.lon], {
+          icon: L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiNmMzljMTIiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IndoaXRlIj4KPHN0eWxlPi5zdDB7ZmlsbDojZmZmZmZmO308L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTIsMnYyMGwtNy03VjloN1YyeiIvPgo8L3N2Zz4KPC9zdmc+',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          })
+        }).bindPopup(wp.name);
         
-        // Extrai pontos da rota
-        gpxPoints = [];
-        const tracks = e.target.getLayers();
-        tracks.forEach(track => {
-          if (track.getLatLngs) {
-            const latlngs = track.getLatLngs();
-            if (Array.isArray(latlngs[0])) {
-              // Multi-segment track
-              latlngs.forEach(segment => {
-                segment.forEach(point => {
-                  gpxPoints.push({ lat: point.lat, lon: point.lng });
-                });
-              });
-            } else {
-              // Single segment track
-              latlngs.forEach(point => {
-                gpxPoints.push({ lat: point.lat, lon: point.lng });
-              });
-            }
-          }
-        });
-        
-        console.log(`${gpxPoints.length} pontos extraídos da rota`);
+        gpxLayer.addLayer(marker);
       });
       
-      gpxLayer.on("error", function(e) {
-        console.error("Erro ao carregar GPX:", e);
-        alert("Erro ao processar arquivo GPX");
-      });
-      
+      // Adiciona ao mapa
       gpxLayer.addTo(map);
+      
+      // Ajusta visualização
+      const group = new L.featureGroup(gpxLayer.getLayers());
+      map.fitBounds(group.getBounds().pad(0.1));
+      
+      console.log(`GPX carregado com sucesso: ${gpxPoints.length} pontos`);
+      speak("Rota carregada com sucesso.");
     })
     .catch(error => {
       console.error("Erro ao carregar arquivo GPX:", error);

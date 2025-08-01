@@ -1,21 +1,31 @@
-<!DOCTYPE html><html lang="pt-BR"><head>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GPX Navigator</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-</head><body>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
   <div id="app">
-    <h1>GPX Navigator</h1>
-    <select id="routeSelect"><option value="">Selecione uma rota</option></select>
-    <button id="startNav">▶️ Iniciar Navegação</button>
-    <button id="centerMe">📍 Centralizar em mim</button>
+    <h1>🌍 GPX Navigator</h1>
+    <div class="controls">
+      <select id="routeSelect">
+        <option value="">Selecione uma rota</option>
+      </select>
+      <button id="startNav">▶️ Iniciar Navegação</button>
+      <button id="centerMe">📍 Centralizar em mim</button>
+    </div>
     <div id="map" style="height: 400px; margin-top:20px;"></div>
-    <div id="position">Lat/Lng: -</div>
-    <footer><p>Feito com ❤️ por Everton Tezzon Ferreira</p></footer>
+    <div id="position">Lat/Lng: Aguardando GPS...</div>
+    <footer>
+      <p>Feito com ❤️ por Everton Tezzon Ferreira</p>
+    </footer>
   </div>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-gpx/gpx.min.js"></script>
+  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
-</body></html>
+</body>
+</html>
