@@ -1,93 +1,366 @@
+/* Reset básico */
+* {
+  box-sizing: border-box;
+}
+
 body { 
-  font-family: sans-serif; 
-  background: #f9f9f9; 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
   color: #333; 
   margin: 0; 
   padding: 20px; 
+  min-height: 100vh;
 }
 
 #app {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
 }
 
 h1 {
   text-align: center;
-  color: #2c3e50;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 2.5em;
+  font-weight: bold;
   margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
 }
 
 select, button {
-  padding: 10px 15px;
-  margin: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 12px 18px;
+  border: 2px solid transparent;
+  border-radius: 12px;
   font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  outline: none;
+  cursor: pointer;
+}
+
+select {
+  background: white;
+  border-color: #ddd;
+  min-width: 220px;
+  color: #333;
+}
+
+select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 button {
-  background-color: #3498db;
+  background: linear-gradient(45deg, #667eea, #764ba2);
   color: white;
-  cursor: pointer;
   border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transform: translateY(0);
 }
 
 button:hover {
-  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 button:active {
-  transform: translateY(1px);
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-#routeSelect {
-  min-width: 200px;
+/* Botões específicos */
+#startNav {
+  background: linear-gradient(45deg, #27ae60, #2ecc71);
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+  font-size: 18px;
+  padding: 15px 25px;
 }
 
+#startNav:hover {
+  box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+}
+
+#centerMe {
+  background: linear-gradient(45deg, #f39c12, #e67e22);
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+}
+
+#centerMe:hover {
+  box-shadow: 0 8px 25px rgba(243, 156, 18, 0.4);
+}
+
+/* Mapa */
 #map {
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: none;
+  border-radius: 15px;
   margin-top: 20px;
-  transition: all 0.3s ease;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  position: relative;
 }
 
+/* Informações de posição */
 #position { 
-  margin-top: 10px; 
+  margin-top: 15px; 
   font-size: 14px; 
   color: #666; 
-  background: #fff;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #eee;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  backdrop-filter: blur(5px);
+  font-family: 'Monaco', 'Consolas', monospace;
+  text-align: center;
 }
 
+/* Footer */
 footer { 
-  margin-top: 30px; 
+  margin-top: 40px; 
   text-align: center; 
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+footer p {
+  margin: 0;
+  padding: 10px;
+}
+
+/* Controles de navegação (modo tela cheia) */
+#navControls {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#navInfo {
+  backdrop-filter: blur(10px);
+  font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+#navInfo div {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+#currentDistance {
+  color: #3498db;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+#nextWaypoint {
+  color: #e67e22;
+}
+
+#currentSpeed {
+  color: #27ae60;
+}
+
+/* Botões de navegação */
+.nav-button {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Animações de loading */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.loading {
+  animation: pulse 2s infinite;
+}
+
+/* Progress bar para download */
+#downloadProgress {
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+#downloadProgress div:first-child {
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+#progressText {
+  font-size: 24px;
+  color: #3498db;
+  font-weight: bold;
 }
 
 /* Estilos para controles do mapa */
 .leaflet-control-container {
+  font-family: inherit;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #333 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  margin: 2px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+  backdrop-filter: blur(5px);
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  transform: scale(1.1);
+}
+
+/* Popups do mapa */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+  border: none !important;
+  backdrop-filter: blur(10px);
+}
+
+.leaflet-popup-content {
+  margin: 15px !important;
+  font-weight: 500;
   font-size: 14px;
 }
 
+.leaflet-popup-tip {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
 /* Estilos responsivos */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   body {
     padding: 10px;
   }
   
+  #app {
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  h1 {
+    font-size: 2em;
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
   select, button {
-    display: block;
     width: 100%;
-    margin: 10px 0;
-    box-sizing: border-box;
+    margin: 5px 0;
+  }
+  
+  #map {
+    height: 350px !important;
+    border-radius: 10px;
+  }
+  
+  #navControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  #navInfo {
+    order: 1;
+    margin-bottom: 10px;
+  }
+  
+  #navInfo div {
+    font-size: 14px;
+  }
+  
+  #currentDistance {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  #app {
+    padding: 15px;
+  }
+  
+  h1 {
+    font-size: 1.8em;
+  }
+  
+  select, button {
+    padding: 10px 15px;
+    font-size: 15px;
   }
   
   #map {
     height: 300px !important;
+  }
+  
+  #navControls {
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    gap: 5px;
+  }
+  
+  #navInfo {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  #navInfo div {
+    font-size: 12px;
+  }
+  
+  #currentDistance {
+    font-size: 14px;
+  }
+}
+
+/* Modo paisagem para navegação */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  body.navigation-mode {
+    padding: 0;
+  }
+  
+  #navControls {
+    flex-direction: row;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+  }
+  
+  #navInfo {
+    flex: 1;
+    margin: 0 10px;
+    padding: 8px 12px;
+  }
+  
+  #navInfo div {
+    font-size: 12px;
+    margin: 2px 0;
   }
 }
 
@@ -102,4 +375,42 @@ footer {
   border: none !important;
   border-radius: 0 !important;
   margin: 0 !important;
+}
+
+/* Oculta controles do Leaflet em modo navegação */
+.navigation-mode .leaflet-control-container .leaflet-top.leaflet-left {
+  top: 60px !important;
+}
+
+/* Indicadores de status */
+.online-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #27ae60;
+  z-index: 10000;
+}
+
+.offline-indicator {
+  background: #e74c3c;
+}
+
+/* Animação de pulsação para GPS */
+@keyframes gps-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(52, 152, 219, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+  }
+}
+
+.gps-active {
+  animation: gps-pulse 2s infinite;
 }

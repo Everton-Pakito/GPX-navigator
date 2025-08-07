@@ -2,30 +2,185 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GPX Navigator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#667eea" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  
+  <title>GPX Navigator - Navegação Offline</title>
+  
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧭%3C/text%3E%3C/svg%3E" />
+  
+  <!-- Estilos -->
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Preconnect para otimização -->
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
 </head>
 <body>
+  <!-- Indicador de conexão -->
+  <div id="connectionIndicator" class="online-indicator"></div>
+  
   <div id="app">
-    <h1>🌍 GPX Navigator</h1>
-    <div class="controls">
-      <select id="routeSelect">
-        <option value="">Selecione uma rota</option>
-      </select>
-      <button id="startNav">▶️ Iniciar Navegação</button>
-      <button id="centerMe">📍 Centralizar em mim</button>
-    </div>
-    <div id="map" style="height: 400px; margin-top:20px;"></div>
-    <div id="position">Lat/Lng: Aguardando GPS...</div>
+    <header>
+      <h1>🧭 GPX Navigator</h1>
+      <p style="text-align: center; color: #666; margin-top: -20px; margin-bottom: 30px;">
+        Navegação offline com GPS e comandos de voz
+      </p>
+    </header>
+    
+    <main>
+      <div class="controls">
+        <select id="routeSelect" aria-label="Selecionar rota">
+          <option value="">📍 Selecione uma rota</option>
+        </select>
+        
+        <button id="startNav" type="button" aria-label="Iniciar navegação">
+          ▶️ Iniciar Navegação
+        </button>
+        
+        <button id="centerMe" type="button" aria-label="Centralizar no GPS">
+          📍 Minha Localização
+        </button>
+        
+        <button id="downloadOffline" type="button" aria-label="Baixar mapas offline" style="display: none;">
+          ⬇️ Download Offline
+        </button>
+      </div>
+      
+      <!-- Container do mapa -->
+      <div id="mapContainer" style="position: relative;">
+        <div id="map" style="height: 400px; border-radius: 15px;"></div>
+        
+        <!-- Overlay de loading -->
+        <div id="mapLoading" style="
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(255,255,255,0.9);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          border-radius: 15px;
+          backdrop-filter: blur(5px);
+          z-index: 500;
+        ">
+          <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 15px;">🗺️</div>
+            <div style="font-size: 18px; color: #667eea; font-weight: bold;">
+              Carregando mapa...
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Informações do GPS -->
+      <div id="position" aria-live="polite">
+        <span class="gps-active">📡</span> Aguardando localização GPS...
+      </div>
+      
+      <!-- Status da navegação -->
+      <div id="navigationStatus" style="
+        margin-top: 15px;
+        padding: 15px;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        display: none;
+      ">
+        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">
+          📊 Status da Navegação
+        </div>
+        <div id="routeInfo">Nenhuma rota carregada</div>
+        <div id="offlineStatus" style="margin-top: 8px; font-size: 14px; color: #666;">
+          🌐 Online
+        </div>
+      </div>
+    </main>
+    
     <footer>
-      <p>Feito com ❤️ por Everton Tezzon Ferreira</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div>
+          <p style="margin: 5px 0;">Feito com ❤️ por <strong>Everton Tezzon Ferreira</strong></p>
+          <p style="margin: 5px 0; font-size: 12px;">Versão 2.0 - Navegação Offline</p>
+        </div>
+        
+        <div style="text-align: right;">
+          <button onclick="window.open('gerador.html', '_blank')" style="
+            background: linear-gradient(45deg, #8e44ad, #9b59b6);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 5px;
+          ">
+            🛠️ Gerador de Rotas
+          </button>
+          <div style="font-size: 12px; color: rgba(255,255,255,0.6);">
+            PWA • GPS • Offline
+          </div>
+        </div>
+      </div>
     </footer>
   </div>
-  
+
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
+  
+  <!-- Script para indicador de conexão -->
+  <script>
+    function updateConnectionStatus() {
+      const indicator = document.getElementById('connectionIndicator');
+      const offlineStatus = document.getElementById('offlineStatus');
+      
+      if (navigator.onLine) {
+        indicator.className = 'online-indicator';
+        if (offlineStatus) offlineStatus.innerHTML = '🌐 Online';
+      } else {
+        indicator.className = 'offline-indicator';
+        if (offlineStatus) offlineStatus.innerHTML = '📴 Offline';
+      }
+    }
+    
+    // Atualiza status inicial
+    updateConnectionStatus();
+    
+    // Monitora mudanças de conectividade
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    
+    // Detecta se é PWA instalado
+    window.addEventListener('load', () => {
+      if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+        document.body.classList.add('pwa-mode');
+      }
+    });
+    
+    // Previne zoom no iOS
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('gesturechange', e => e.preventDefault());
+    
+    // Detecta orientação para navegação
+    function handleOrientationChange() {
+      if (document.body.classList.contains('navigation-mode')) {
+        setTimeout(() => {
+          if (window.map && window.map.invalidateSize) {
+            window.map.invalidateSize();
+          }
+        }, 500);
+      }
+    }
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+  </script>
 </body>
 </html>

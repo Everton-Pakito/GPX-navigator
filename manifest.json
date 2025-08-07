@@ -1,20 +1,109 @@
 {
-  "name": "GPX Navigator",
-  "short_name": "GPXNav",
+  "name": "GPX Navigator - Navegação Offline",
+  "short_name": "GPX Navigator",
+  "description": "Aplicativo PWA para navegação GPS offline com arquivos GPX, comandos de voz e mapas em cache",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3498db",
+  "orientation": "any",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "scope": "./",
+  "lang": "pt-BR",
+  
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='192' height='192' rx='24' fill='url(%23grad1)'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='white'%3E🧭%3C/text%3E%3C/svg%3E",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='64' fill='url(%23grad2)'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle' fill='white'%3E🧭%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='24' fill='%23667eea'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='white'%3E🧭%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'%3E%3Crect width='390' height='844' fill='%23f9f9f9'/%3E%3Crect x='20' y='60' width='350' height='724' rx='20' fill='white'/%3E%3Ctext x='195' y='120' font-size='24' text-anchor='middle' fill='%23333'%3EGPX Navigator%3C/text%3E%3Crect x='40' y='160' width='310' height='300' rx='15' fill='%23e8f4fd'/%3E%3Ctext x='195' y='320' font-size='48' text-anchor='middle'%3E🗺️%3C/text%3E%3Crect x='60' y='500' width='270' height='40' rx='20' fill='%23667eea'/%3E%3Ctext x='195' y='525' font-size='16' text-anchor='middle' fill='white'%3EIniciar Navegação%3C/text%3E%3C/svg%3E",
+      "sizes": "390x844",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Interface principal do GPX Navigator"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 844 390'%3E%3Crect width='844' height='390' fill='%23000'/%3E%3Crect x='0' y='0' width='844' height='390' fill='%23e8f4fd'/%3E%3Ctext x='422' y='200' font-size='80' text-anchor='middle'%3E🗺️%3C/text%3E%3Crect x='20' y='20' width='120' height='40' rx='20' fill='%23e74c3c'/%3E%3Ctext x='80' y='45' font-size='14' text-anchor='middle' fill='white'%3EVoltar%3C/text%3E%3Crect x='160' y='20' width='200' height='60' rx='15' fill='rgba(0,0,0,0.8)'/%3E%3Ctext x='260' y='45' font-size='12' text-anchor='middle' fill='white'%3EDistância: 250m%3C/text%3E%3Ctext x='260' y='65' font-size='12' text-anchor='middle' fill='white'%3EPonto 3 de 15%3C/text%3E%3C/svg%3E",
+      "sizes": "844x390",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Modo de navegação em tela cheia"
+    }
+  ],
+  
+  "categories": [
+    "travel",
+    "navigation",
+    "utilities",
+    "sports"
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Iniciar Navegação",
+      "short_name": "Navegar",
+      "description": "Inicia navegação com GPS",
+      "url": "./index.html?action=navigate",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='12' fill='%2327ae60'/%3E%3Ctext x='48' y='65' font-size='48' text-anchor='middle' fill='white'%3E▶️%3C/text%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Gerador de Rotas",
+      "short_name": "Gerador",
+      "description": "Cria arquivo routes.json",
+      "url": "./gerador.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='12' fill='%238e44ad'/%3E%3Ctext x='48' y='65' font-size='48' text-anchor='middle' fill='white'%3E🛠️%3C/text%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  
+  "features": [
+    "offline",
+    "gps",
+    "voice",
+    "fullscreen"
+  ],
+  
+  "related_applications": [],
+  
+  "prefer_related_applications": false,
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  
+  "handle_links": "preferred",
+  
+  "capture_links": "existing-client-navigate"
 }
