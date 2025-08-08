@@ -84,38 +84,47 @@ self.addEventListener('fetch', event => {
 function isTileRequest(url) {
   return url.hostname.includes('tile.openstreetmap.org') || 
          url.hostname.includes('tile') ||
-         (url.pathname.includes('.png') && url.searchParams.has('z'));
+         (url.pathname.includes('.png') && url.pathname.includes('/'));
 }
 
-// Manipula requisições de tiles
+// Manipula requisições de tiles - OTIMIZADO
 async function handleTileRequest(request) {
+  const cache = await caches.open(TILES_CACHE_NAME);
+  
   try {
-    const cache = await caches.open(TILES_CACHE_NAME);
+    // Primeiro tenta cache
     const cachedResponse = await cache.match(request);
-    
     if (cachedResponse) {
-      console.log('Service Worker: Tile servido do cache:', request.url);
       return cachedResponse;
     }
     
-    // Tenta buscar online
+    // Se não tem no cache, tenta rede com timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    
     try {
-      const networkResponse = await fetch(request);
+      const networkResponse = await fetch(request, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       if (networkResponse.ok) {
-        // Cacheia para próximas vezes
-        await cache.put(request, networkResponse.clone());
-        console.log('Service Worker: Tile baixado e cacheado:', request.url);
+        // Cache em background
+        cache.put(request, networkResponse.clone()).catch(e => 
+          console.warn('Falha ao cachear tile:', e)
+        );
         return networkResponse;
       }
-    } catch (networkError) {
-      console.log('Service Worker: Falha na rede para tile:', request.url);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.log('Service Worker: Rede falhou para tile, usando placeholder');
     }
     
-    // Retorna tile de placeholder se não conseguir carregar
+    // Retorna placeholder se tudo falhar
     return createPlaceholderTile();
     
   } catch (error) {
-    console.error('Service Worker: Erro ao processar tile:', error);
+    console.error('Service Worker: Erro crítico no tile:', error);
     return createPlaceholderTile();
   }
 }

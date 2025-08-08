@@ -392,25 +392,81 @@ footer p {
   border-radius: 50%;
   background: #27ae60;
   z-index: 10000;
+  box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
 }
 
 .offline-indicator {
   background: #e74c3c;
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+  animation: blink 1s infinite;
 }
 
-/* Animação de pulsação para GPS */
-@keyframes gps-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 20px rgba(52, 152, 219, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
-  }
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
 }
 
-.gps-active {
-  animation: gps-pulse 2s infinite;
+/* Status da navegação */
+#navigationStatus {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(5px);
+}
+
+#navigationStatus div:first-child {
+  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+/* Botões com estado loading */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+button:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+/* Melhorias para waypoints visíveis */
+.leaflet-marker-icon {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Rota mais visível */
+.leaflet-interactive {
+  stroke-width: 6 !important;
+  filter: drop-shadow(0 0 3px rgba(0,0,0,0.4));
+}
+
+/* Controles de navegação aprimorados */
+#navControls button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+#navInfo {
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.3);
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+/* Popup do GPS mais visível */
+.leaflet-popup-content {
+  font-weight: 600 !important;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }

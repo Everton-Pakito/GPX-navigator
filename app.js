@@ -12,9 +12,10 @@ let currentWaypointIndex = 0;
 let offlineTileLayer = null;
 let downloadedTiles = new Set();
 
-// Cache de tiles offline
+// Cache de tiles offline - OTIMIZADO
 const TILE_CACHE_NAME = 'gpx-tiles-cache';
-const TILE_ZOOM_LEVELS = [10, 11, 12, 13, 14, 15, 16, 17]; // Níveis de zoom para cache
+const TILE_ZOOM_LEVELS = [13, 14, 15, 16]; // Reduzido para ser mais rápido
+const MAX_CONCURRENT_DOWNLOADS = 3; // Limite de downloads simultâneos
 
 // Adiciona camada de tiles online/offline
 function createTileLayer() {
@@ -34,8 +35,8 @@ const createUserIcon = (heading = 0) => {
     iconUrl: `data:image/svg+xml;base64,${btoa(`
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g transform="rotate(${rotation} 24 24)">
-          <circle cx="24" cy="24" r="20" fill="#3498db" stroke="white" stroke-width="2"/>
-          <polygon points="24,10 30,30 24,26 18,30" fill="white"/>
+          <circle cx="24" cy="24" r="20" fill="#3498db" stroke="white" stroke-width="3"/>
+          <polygon points="24,8 32,28 24,24 16,28" fill="white"/>
         </g>
       </svg>
     `)}`,
@@ -48,6 +49,8 @@ const createUserIcon = (heading = 0) => {
 // Força orientação horizontal e tela cheia
 async function enableNavigationMode() {
   try {
+    document.body.classList.add('navigation-mode');
+    
     // Tenta forçar orientação landscape
     if (screen.orientation && screen.orientation.lock) {
       await screen.orientation.lock('landscape').catch(e => console.log('Orientação não suportada:', e));
@@ -69,6 +72,8 @@ async function enableNavigationMode() {
 // Desabilita modo navegação
 async function disableNavigationMode() {
   try {
+    document.body.classList.remove('navigation-mode');
+    
     // Libera orientação
     if (screen.orientation && screen.orientation.unlock) {
       screen.orientation.unlock();
@@ -132,7 +137,7 @@ async function toggleFullscreen() {
   // Força o mapa a se redimensionar
   setTimeout(() => {
     map.invalidateSize();
-  }, 100);
+  }, 200);
 }
 
 // Adiciona controles de navegação
@@ -152,6 +157,7 @@ function addNavigationControls() {
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 10px;
+    pointer-events: none;
   `;
   
   // Botão voltar
@@ -167,6 +173,7 @@ function addNavigationControls() {
     font-size: 14px;
     font-weight: bold;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    pointer-events: auto;
   `;
   backButton.onclick = stopNavigation;
   
@@ -182,6 +189,7 @@ function addNavigationControls() {
     line-height: 1.4;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     max-width: 300px;
+    pointer-events: none;
   `;
   infoPanel.innerHTML = `
     <div id="currentDistance">Distância: Calculando...</div>
@@ -195,23 +203,24 @@ function addNavigationControls() {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    pointer-events: auto;
   `;
   
   // Botão centralizar
   const centerButton = document.createElement('button');
-  centerButton.innerHTML = '📍 Centro';
-  centerButton.style.cssText = backButton.style.cssText.replace('#e74c3c', '#3498db');
+  centerButton.innerHTML = '📍';
+  centerButton.style.cssText = backButton.style.cssText.replace('#e74c3c', '#3498db') + 'width: 50px;';
   centerButton.onclick = () => {
     if (currentPosition) {
-      map.setView(currentPosition, 17);
+      map.setView(currentPosition, Math.max(map.getZoom(), 16));
     }
   };
   
   // Botão silenciar
   const muteButton = document.createElement('button');
-  muteButton.innerHTML = '🔊 Som';
+  muteButton.innerHTML = '🔊';
   muteButton.id = 'muteButton';
-  muteButton.style.cssText = backButton.style.cssText.replace('#e74c3c', '#27ae60');
+  muteButton.style.cssText = backButton.style.cssText.replace('#e74c3c', '#27ae60') + 'width: 50px;';
   muteButton.onclick = toggleMute;
   
   controlButtons.appendChild(centerButton);
@@ -240,7 +249,7 @@ function toggleMute() {
   isMuted = !isMuted;
   const button = document.getElementById('muteButton');
   if (button) {
-    button.innerHTML = isMuted ? '🔇 Mudo' : '🔊 Som';
+    button.innerHTML = isMuted ? '🔇' : '🔊';
     button.style.backgroundColor = isMuted ? '#e74c3c' : '#27ae60';
   }
   speak(isMuted ? 'Áudio desabilitado' : 'Áudio habilitado');
@@ -254,51 +263,81 @@ function stopNavigation() {
   speak('Navegação finalizada');
 }
 
-// Download de tiles para área específica
+// Download de tiles otimizado - SÓ PARA ÁREA PEQUENA
 async function downloadTilesForBounds(bounds, onProgress) {
   const cache = await caches.open(TILE_CACHE_NAME);
   let totalTiles = 0;
   let downloadedCount = 0;
   
-  // Calcula total de tiles
+  // Calcula total de tiles (REDUZIDO)
   TILE_ZOOM_LEVELS.forEach(zoom => {
     const tileBounds = getTileBounds(bounds, zoom);
-    totalTiles += (tileBounds.maxX - tileBounds.minX + 1) * (tileBounds.maxY - tileBounds.minY + 1);
+    const tilesX = Math.min(tileBounds.maxX - tileBounds.minX + 1, 5); // Máximo 5 tiles por eixo
+    const tilesY = Math.min(tileBounds.maxY - tileBounds.minY + 1, 5);
+    totalTiles += tilesX * tilesY;
   });
   
-  speak(`Baixando ${totalTiles} tiles do mapa para uso offline`);
+  console.log(`Iniciando download de ${totalTiles} tiles`);
+  
+  // Download com limite de concorrência
+  const downloadPromises = [];
+  let activeDownloads = 0;
   
   for (const zoom of TILE_ZOOM_LEVELS) {
     const tileBounds = getTileBounds(bounds, zoom);
     
-    for (let x = tileBounds.minX; x <= tileBounds.maxX; x++) {
-      for (let y = tileBounds.minY; y <= tileBounds.maxY; y++) {
-        const tileUrl = `https://a.tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+    const maxX = Math.min(tileBounds.maxX, tileBounds.minX + 4); // Limita área
+    const maxY = Math.min(tileBounds.maxY, tileBounds.minY + 4);
+    
+    for (let x = tileBounds.minX; x <= maxX; x++) {
+      for (let y = tileBounds.minY; y <= maxY; y++) {
         
-        try {
-          const response = await fetch(tileUrl);
-          if (response.ok) {
-            await cache.put(tileUrl, response.clone());
-            downloadedTiles.add(tileUrl);
-          }
-        } catch (error) {
-          console.warn('Erro ao baixar tile:', tileUrl, error);
+        // Controla concorrência
+        while (activeDownloads >= MAX_CONCURRENT_DOWNLOADS) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        downloadedCount++;
-        if (onProgress) {
-          onProgress(downloadedCount, totalTiles);
-        }
+        activeDownloads++;
         
-        // Pequena pausa para não sobrecarregar
-        if (downloadedCount % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
+        const downloadPromise = downloadSingleTile(cache, zoom, x, y)
+          .then(() => {
+            downloadedCount++;
+            if (onProgress) {
+              onProgress(downloadedCount, totalTiles);
+            }
+          })
+          .finally(() => {
+            activeDownloads--;
+          });
+          
+        downloadPromises.push(downloadPromise);
       }
     }
   }
   
-  speak(`Download concluído: ${downloadedCount} tiles baixados`);
+  await Promise.all(downloadPromises);
+  console.log(`Download concluído: ${downloadedCount} tiles`);
+}
+
+// Download de tile individual
+async function downloadSingleTile(cache, zoom, x, y) {
+  const tileUrl = `https://a.tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+  
+  try {
+    // Verifica se já existe no cache
+    const existingResponse = await cache.match(tileUrl);
+    if (existingResponse) {
+      return;
+    }
+    
+    const response = await fetch(tileUrl);
+    if (response.ok) {
+      await cache.put(tileUrl, response.clone());
+      downloadedTiles.add(tileUrl);
+    }
+  } catch (error) {
+    console.warn('Erro ao baixar tile:', tileUrl, error);
+  }
 }
 
 // Calcula bounds dos tiles
@@ -332,7 +371,11 @@ if (navigator.geolocation) {
       // Atualiza posição na tela
       const posElement = document.getElementById("position");
       if (posElement) {
-        posElement.textContent = `Lat/Lng: ${latlng.map(c => c.toFixed(5)).join(", ")} | Precisão: ${accuracy.toFixed(0)}m`;
+        posElement.innerHTML = `
+          <span class="gps-active">📡</span> 
+          Lat/Lng: ${latlng.map(c => c.toFixed(5)).join(", ")} | 
+          Precisão: ${accuracy.toFixed(0)}m
+        `;
       }
       
       // Atualiza informações de navegação
@@ -345,7 +388,7 @@ if (navigator.geolocation) {
       if (!userMarker) {
         userMarker = L.marker(latlng, { icon: userIcon })
           .addTo(map)
-          .bindPopup("Você está aqui");
+          .bindPopup("📍 Você está aqui");
       } else {
         userMarker.setLatLng(latlng);
         userMarker.setIcon(userIcon);
@@ -367,8 +410,8 @@ if (navigator.geolocation) {
     },
     { 
       enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 1000
+      timeout: 8000,
+      maximumAge: 2000
     }
   );
 } else {
@@ -392,7 +435,7 @@ function calculateHeading(from, to) {
 
 // Atualiza informações de navegação
 function updateNavigationInfo(speed, heading) {
-  const speedKmh = (speed || 0) * 3.6; // converte m/s para km/h
+  const speedKmh = (speed || 0) * 3.6;
   
   // Atualiza velocidade
   const speedElement = document.getElementById('currentSpeed');
@@ -533,13 +576,14 @@ function parseGPX(gpxText) {
   return { tracks, waypoints, routeData };
 }
 
-// Carrega arquivo GPX com download offline
+// Carrega arquivo GPX CORRIGIDO
 async function loadGPX(filePath) {
   console.log("Tentando carregar GPX:", filePath);
   
   // Remove camada anterior se existir
   if (gpxLayer) {
     map.removeLayer(gpxLayer);
+    gpxLayer = null;
   }
   
   try {
@@ -572,7 +616,7 @@ async function loadGPX(filePath) {
         const polyline = L.polyline(track, {
           color: '#e74c3c',
           weight: 5,
-          opacity: 0.8
+          opacity: 0.9
         });
         
         gpxLayer.addLayer(polyline);
@@ -619,7 +663,7 @@ async function loadGPX(filePath) {
       gpxLayer.addLayer(marker);
     });
     
-    // Adiciona ao mapa
+    // IMPORTANTE: Adiciona ao mapa PRIMEIRO
     gpxLayer.addTo(map);
     
     // Ajusta visualização
@@ -630,7 +674,7 @@ async function loadGPX(filePath) {
     console.log(`GPX carregado: ${routePoints.length} pontos de navegação`);
     speak(`Rota carregada com ${routePoints.length} pontos`);
     
-    // Download tiles offline para a área da rota
+    // Download tiles offline OTIMIZADO para navegação
     if (isNavigating) {
       const progressDiv = document.createElement('div');
       progressDiv.id = 'downloadProgress';
@@ -639,22 +683,37 @@ async function loadGPX(filePath) {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.8);
+        background: rgba(0,0,0,0.9);
         color: white;
-        padding: 20px;
-        border-radius: 10px;
+        padding: 25px;
+        border-radius: 15px;
         z-index: 10000;
         text-align: center;
+        border: 2px solid #3498db;
       `;
-      progressDiv.innerHTML = '<div>Preparando mapa offline...</div><div id="progressText">0%</div>';
+      progressDiv.innerHTML = `
+        <div style="font-size: 18px; margin-bottom: 15px;">🗺️ Preparando navegação offline</div>
+        <div id="progressText" style="font-size: 24px; color: #3498db; font-weight: bold;">0%</div>
+        <div style="font-size: 12px; margin-top: 10px; color: #ccc;">Baixando mapas da região...</div>
+      `;
       document.body.appendChild(progressDiv);
       
-      await downloadTilesForBounds(bounds, (current, total) => {
-        const percent = Math.round((current / total) * 100);
-        document.getElementById('progressText').textContent = `${percent}% (${current}/${total})`;
-      });
-      
-      progressDiv.remove();
+      try {
+        await downloadTilesForBounds(bounds, (current, total) => {
+          const percent = Math.round((current / total) * 100);
+          const progressText = document.getElementById('progressText');
+          if (progressText) {
+            progressText.textContent = `${percent}% (${current}/${total})`;
+          }
+        });
+        
+        speak("Mapas baixados com sucesso. Navegação pronta!");
+      } catch (error) {
+        console.warn("Erro no download de tiles:", error);
+        speak("Aviso: alguns mapas podem não estar disponíveis offline");
+      } finally {
+        progressDiv.remove();
+      }
     }
     
   } catch (error) {
@@ -686,13 +745,23 @@ fetch('routes.json')
       option.textContent = route.name;
       select.appendChild(option);
     });
+    
+    // Atualiza status
+    const routeInfo = document.getElementById('routeInfo');
+    if (routeInfo) {
+      routeInfo.textContent = `${data.length} rotas disponíveis`;
+    }
   })
   .catch(error => {
     console.error("Erro ao carregar routes.json:", error);
     speak("Erro ao carregar lista de rotas");
+    const routeInfo = document.getElementById('routeInfo');
+    if (routeInfo) {
+      routeInfo.textContent = "Erro ao carregar rotas";
+    }
   });
 
-// Botão iniciar navegação
+// Botão iniciar navegação CORRIGIDO
 document.getElementById("startNav").onclick = async () => {
   const selected = document.getElementById("routeSelect").value;
   
@@ -702,22 +771,67 @@ document.getElementById("startNav").onclick = async () => {
   }
   
   console.log("Iniciando navegação com:", selected);
-  speak("Iniciando navegação. Preparando mapa offline...");
+  
+  // Mostra loading
+  const startButton = document.getElementById("startNav");
+  const originalText = startButton.textContent;
+  startButton.textContent = "⏳ Carregando...";
+  startButton.disabled = true;
   
   try {
-    // Ativa modo navegação
+    // Primeiro carrega a rota
+    await loadGPX(selected);
+    
+    // Aguarda um momento para garantir que a rota está visível
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Só então ativa modo navegação
     isNavigating = true;
     await toggleFullscreen();
     
-    // Carrega a rota com download offline
-    await loadGPX(selected);
+    // Mostra status de navegação
+    const navStatus = document.getElementById('navigationStatus');
+    if (navStatus) {
+      navStatus.style.display = 'block';
+      const routeInfo = document.getElementById('routeInfo');
+      if (routeInfo) {
+        routeInfo.innerHTML = `
+          <strong>Navegando:</strong> ${document.getElementById('routeSelect').selectedOptions[0].textContent}<br>
+          <small>${routePoints.length} pontos de navegação</small>
+        `;
+      }
+    }
     
     speak("Navegação iniciada. Siga as instruções de voz.");
     
   } catch (error) {
     isNavigating = false;
     speak("Erro ao iniciar navegação: " + error.message);
-    await toggleFullscreen(); // Volta ao modo normal
     console.error("Erro na navegação:", error);
+    alert("Erro ao iniciar navegação: " + error.message);
+  } finally {
+    // Restaura botão
+    startButton.textContent = originalText;
+    startButton.disabled = false;
   }
 };
+
+// Mostra/esconde status quando não estiver navegando
+document.getElementById('routeSelect').addEventListener('change', function() {
+  const navStatus = document.getElementById('navigationStatus');
+  if (this.value && navStatus) {
+    navStatus.style.display = 'block';
+    const routeInfo = document.getElementById('routeInfo');
+    if (routeInfo) {
+      routeInfo.innerHTML = `<strong>Selecionado:</strong> ${this.selectedOptions[0].textContent}`;
+    }
+  } else if (navStatus && !isNavigating) {
+    navStatus.style.display = 'none';
+  }
+});
+
+// Expõe variáveis globais para debug
+window.map = map;
+window.gpxLayer = gpxLayer;
+window.routePoints = routePoints;
+window.isNavigating = isNavigating;
